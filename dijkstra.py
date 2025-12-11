@@ -70,7 +70,6 @@ def dijkstra(grid, start, goal):
             break
         px, py = parent[y, x]  # read parent from [row, col]
         if px < 0:
-            # Safety guard: parent not set -> no valid path
             return []
         x, y = px, py
 

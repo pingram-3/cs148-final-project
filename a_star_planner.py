@@ -20,7 +20,7 @@ class AStarPlanner:
         self.pose_helper = TFPoseHelper(fixed_frame=fixed_frame,
                                         base_frame=base_frame)
 
-        self.grid = None      # will be set in map_callback
+        self.grid = None      
         self.resolution = None
         self.origin_x = None
         self.origin_y = None
@@ -47,7 +47,7 @@ class AStarPlanner:
         # 0 = free, 100 = occupied, -1 = unknown
         grid = np.zeros_like(data, dtype=np.int8)
         grid[data == OCCUPIED] = 1   # only 100 is blocked
-        grid[data != OCCUPIED] = 0   # treat unknown (-1) as free for now
+        grid[data != OCCUPIED] = 0   
 
         self.grid = grid
 
@@ -86,7 +86,7 @@ class AStarPlanner:
 
         h, w = self.grid.shape
 
-        # Debug logs (you’re already seeing these)
+        # Debug logs 
         rospy.loginfo(
             f"Start world: {start_world} -> grid: ({sx}, {sy}), value={self.grid[sy, sx]}"
         )
@@ -169,9 +169,9 @@ class AStarPlanner:
         self.plan_and_publish((x, y), (gx, gy))
 
 if __name__ == "__main__":
-    rospy.init_node("a_star_planner_tf")  # or "a_star_planner", either is fine
+    rospy.init_node("a_star_planner_tf") 
 
-    # Use whatever frame your RViz goals are in; usually "map"
+    # Use frame RViz goals are in
     planner = AStarPlanner(fixed_frame="odom", base_frame="base_footprint")
 
     rospy.loginfo("A*Planner waiting for goals from RViz (/move_base_simple/goal)")

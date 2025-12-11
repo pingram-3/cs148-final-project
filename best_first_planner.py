@@ -20,7 +20,7 @@ class BestFirstPlanner:
         self.pose_helper = TFPoseHelper(fixed_frame=fixed_frame,
                                         base_frame=base_frame)
 
-        self.grid = None      # will be set in map_callback
+        self.grid = None    
         self.resolution = None
         self.origin_x = None
         self.origin_y = None
@@ -86,7 +86,7 @@ class BestFirstPlanner:
 
         h, w = self.grid.shape
 
-        # Debug logs (you’re already seeing these)
+        # Debug logs 
         rospy.loginfo(
             f"Start world: {start_world} -> grid: ({sx}, {sy}), value={self.grid[sy, sx]}"
         )
@@ -104,7 +104,7 @@ class BestFirstPlanner:
             rospy.logerr("Start or goal in obstacle")
             return
 
-        # --- Run A* on the grid ---
+        # Run A* on the grid
         path_cells = best_first(self.grid, (sx, sy), (gx, gy))
         if not path_cells:
             rospy.logwarn("No path found by A*")
@@ -112,7 +112,7 @@ class BestFirstPlanner:
 
         rospy.loginfo(f"A* found path with {len(path_cells)} cells")
 
-        # --- Build Path message ---
+        # Build Path message
         path_msg = Path()
         path_msg.header.stamp = rospy.Time.now()
         path_msg.header.frame_id = "odom"  # since we’re in the odom frame
@@ -165,13 +165,13 @@ class BestFirstPlanner:
 
         rospy.loginfo(f"Received RViz goal: ({gx:.3f}, {gy:.3f})")
 
-        # Call your existing planner function that expects world coords
+        # Call existing planner function that expects world coords
         self.plan_and_publish((x, y), (gx, gy))
 
 if __name__ == "__main__":
-    rospy.init_node("best_first_planner_tf")  # or "best_first_planner", either is fine
+    rospy.init_node("best_first_planner_tf") 
 
-    # Use whatever frame your RViz goals are in; usually "map"
+    # Use frame RViz goals are in
     planner = BestFirstPlanner(fixed_frame="odom", base_frame="base_footprint")
 
     rospy.loginfo("A*Planner waiting for goals from RViz (/move_base_simple/goal)")

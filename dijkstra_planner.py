@@ -20,7 +20,7 @@ class DijkstraPlanner:
         self.pose_helper = TFPoseHelper(fixed_frame=fixed_frame,
                                         base_frame=base_frame)
 
-        self.grid = None      # will be set in map_callback
+        self.grid = None     
         self.resolution = None
         self.origin_x = None
         self.origin_y = None
@@ -46,8 +46,8 @@ class DijkstraPlanner:
         )
         # 0 = free, 100 = occupied, -1 = unknown
         grid = np.zeros_like(data, dtype=np.int8)
-        grid[data == OCCUPIED] = 1   # only 100 is blocked
-        grid[data != OCCUPIED] = 0   # treat unknown (-1) as free for now
+        grid[data == OCCUPIED] = 1  
+        grid[data != OCCUPIED] = 0  
 
         self.grid = grid
 
@@ -80,13 +80,13 @@ class DijkstraPlanner:
             rospy.logwarn("No map received yet")
             return
 
-        # Convert world → grid
+        # Convert world to grid
         sx, sy = self.world_to_grid(*start_world)
         gx, gy = self.world_to_grid(*goal_world)
 
         h, w = self.grid.shape
 
-        # Debug logs (you’re already seeing these)
+        # Debug logs
         rospy.loginfo(
             f"Start world: {start_world} -> grid: ({sx}, {sy}), value={self.grid[sy, sx]}"
         )
@@ -104,7 +104,7 @@ class DijkstraPlanner:
             rospy.logerr("Start or goal in obstacle")
             return
 
-        # --- Run Dijkstra on the grid ---
+        # Run Dijkstra on the grid
         path_cells = dijkstra(self.grid, (sx, sy), (gx, gy))
         if not path_cells:
             rospy.logwarn("No path found by Dijkstra")
@@ -112,10 +112,10 @@ class DijkstraPlanner:
 
         rospy.loginfo(f"Dijkstra found path with {len(path_cells)} cells")
 
-        # --- Build Path message ---
+        # Build Path message
         path_msg = Path()
         path_msg.header.stamp = rospy.Time.now()
-        path_msg.header.frame_id = "odom"  # since we’re in the odom frame
+        path_msg.header.frame_id = "odom"  
 
         for (cx, cy) in path_cells:
             wx, wy = self.grid_to_world(cx, cy)
@@ -165,13 +165,13 @@ class DijkstraPlanner:
 
         rospy.loginfo(f"Received RViz goal: ({gx:.3f}, {gy:.3f})")
 
-        # Call your existing planner function that expects world coords
+        # Call existing planner function that expects world coords
         self.plan_and_publish((x, y), (gx, gy))
 
 if __name__ == "__main__":
-    rospy.init_node("dijkstra_planner_tf")  # or "dijkstra_planner", either is fine
+    rospy.init_node("dijkstra_planner_tf") 
 
-    # Use whatever frame your RViz goals are in; usually "map"
+    # Use same frame RViz goals are in
     planner = DijkstraPlanner(fixed_frame="odom", base_frame="base_footprint")
 
     rospy.loginfo("DijkstraPlanner waiting for goals from RViz (/move_base_simple/goal)")
