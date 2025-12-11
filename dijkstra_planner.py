@@ -12,16 +12,32 @@ FREE = 0
 OCCUPIED = 100
 
 class DijkstraPlanner:
-    def __init__(self, fixed_frame="map", base_frame="base_link"):
+    def __init__(self, fixed_frame="odom", base_frame="base_footprint"):
         self.map_sub  = rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         self.path_pub = rospy.Publisher("/dijkstra_path", Path, queue_size=1, latch=True)
 
-        self.grid = None
-        self.info = None
-
-        # TF pose helper
+        # Helper to get robot pose in the same frame as RViz goals
         self.pose_helper = TFPoseHelper(fixed_frame=fixed_frame,
                                         base_frame=base_frame)
+
+        self.grid = None      # will be set in map_callback
+        self.resolution = None
+        self.origin_x = None
+        self.origin_y = None
+        
+         # subscribe to RViz goals
+        self.goal_sub = rospy.Subscriber(
+            "/move_base_simple/goal",    # topic RViz uses for 2D Nav Goal
+            PoseStamped,
+            self.goal_callback,
+        )
+        
+        self.goal_sub_rviz = rospy.Subscriber(
+            "/rviz/move_base_simple/goal",
+            PoseStamped,
+            self.goal_callback,
+            queue_size=1,
+        )
 
     def map_callback(self, msg):
         self.info = msg.info
@@ -129,31 +145,34 @@ class DijkstraPlanner:
 
         self.plan_and_publish(start_world, goal_world)
 
-if __name__ == "__main__":
-    rospy.init_node("dijkstra_planner_tf")
+    def goal_callback(self, msg: PoseStamped):
+        # Make sure we have a map
+        if self.grid is None:
+            rospy.logwarn("No map received yet, cannot plan")
+            return
 
-    # Change fixed_frame if you don’t have map
+        # Get current robot pose
+        pose = self.pose_helper.get_robot_pose()
+        if pose is None:
+            rospy.logwarn("Cannot get robot pose, skipping goal")
+            return
+
+        x, y, yaw = pose
+
+        # Goal from RViz click (in map frame)
+        gx = msg.pose.position.x
+        gy = msg.pose.position.y
+
+        rospy.loginfo(f"Received RViz goal: ({gx:.3f}, {gy:.3f})")
+
+        # Call your existing planner function that expects world coords
+        self.plan_and_publish((x, y), (gx, gy))
+
+if __name__ == "__main__":
+    rospy.init_node("dijkstra_planner_tf")  # or "dijkstra_planner", either is fine
+
+    # Use whatever frame your RViz goals are in; usually "map"
     planner = DijkstraPlanner(fixed_frame="odom", base_frame="base_footprint")
 
-    rospy.loginfo("Waiting for map and TF pose...")
-    rate = rospy.Rate(10)
-    while not rospy.is_shutdown():
-        if planner.grid is not None:
-            pose = planner.pose_helper.get_robot_pose()
-            if pose is not None:
-                rospy.loginfo("Map and TF pose ready")
-                break
-        rate.sleep()
-
-    if rospy.is_shutdown():
-        raise SystemExit
-
-     # Current robot pose in odom
-    x, y, yaw = planner.pose_helper.get_robot_pose()
-
-    # For now: simple goal 1 m in front in odom frame
-    goal_world = (x + 1.0, y)
-
-    planner.plan_and_publish((x, y), goal_world)
-
+    rospy.loginfo("DijkstraPlanner waiting for goals from RViz (/move_base_simple/goal)")
     rospy.spin()
