@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import rospy
+import rospkg
 import cv2
 import numpy as np
 from nav_msgs.msg import OccupancyGrid
@@ -10,16 +11,21 @@ FREE_THRESHOLD = 254
 OCC_THRESHOLD = 205
 
 def make_occupancy_grid():
-    # Load grayscale map (0–255)
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    img_path = os.path.join(script_dir, "maps", "project_map.pgm")
-    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    rospack = rospkg.RosPack()
+    pkg_path = rospack.get_path('cs148_final_project')   
+
+    map_file = os.path.join(pkg_path, 'maps', 'project_map.pgm')
+
+    if not os.path.exists(map_file):
+        raise RuntimeError(f"Could not open {map_file}")
+
+    img = cv2.imread(map_file, cv2.IMREAD_GRAYSCALE)
     if img is None:
-        raise RuntimeError("Could not open maps/project_map.pgm")
+        raise RuntimeError(f"OpenCV could not load {map_file}")
 
-    img = cv2.flip(img, 0)   # 0 = flip around x-axis
+    img = cv2.flip(img, 0)
 
-    #Create occupancy grid
+    # 3) Create occupancy grid
     occ_grid = np.full(img.shape, -1, dtype=np.int8)
     occ_grid[img >= FREE_THRESHOLD] = 0
     occ_grid[img <= OCC_THRESHOLD] = 100
