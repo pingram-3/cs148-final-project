@@ -1,0 +1,22 @@
+<launch>
+  <!-- Launch TurtleBot3 Gazebo world -->
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_world.launch"/>
+  
+  <!-- Start occupany grid -->
+  <node pkg="cs148_final_project" type="occupancy_grid.py" name="occupany_grid" output="screen"/>
+
+  <!-- Start A* planner node -->
+  <node pkg="cs148_final_project" type="a_star_planner.py" name="a_star_planner" output="screen"/>
+
+  <!-- Start Dijkstra planner node -->
+  <node pkg="cs148_final_project" type="dijkstra_planner.py" name="dijkstra_planner" output="screen"/>
+
+  <!-- Start Greedy Best-First planner node -->
+  <node pkg="cs148_final_project" type="best_first_planner.py" name="best_first_planner" output="screen"/>
+
+  <!-- Start Path Follower -->
+  <node pkg="cs148_final_project" type="path_follower.py" name="path_follower" output="screen"/>
+
+  <!-- Start RViz with a config -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find cs148_final_project)/rviz/final_project_config.rviz"/>
+</launch>

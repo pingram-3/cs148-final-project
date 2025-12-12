@@ -16,7 +16,12 @@ source devel/setup.bash
 ```
 
 ## Example Usage
-### Set Up
+### Set Up (automated)
+```bash
+roslaunch cs148_final_project path_planning_robot.launch
+```
+
+### Set Up (manual)
 ```bash
 roscore # Terminal 1; start ROS master
 roslaunch turtlebot3_gazebo turtlebot3_world.launch # Terminal 2; launch Gazebo
@@ -26,7 +31,9 @@ rosrun cs148_final_project path_follower.py     # Terminal 5
 ```
 
 ## Using the Program
-```bash
-# Launch rviz
-rviz
-```
+Select the "2D Nav Goal" in the top left bar. Click on a point within the map to mark a goal position. You will see three lines form:
+- Green --> A*
+- Red --> Dijkstra
+- Blue --> Best-First
+
+In the event only 1 or 2 path show up, it may be due to the fact that some algorithms form the same path.
