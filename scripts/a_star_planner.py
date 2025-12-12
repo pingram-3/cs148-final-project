@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from a_star import a_star
+from a_star import astar
 from tf_pose import TFPoseHelper
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.msg import Path
@@ -105,7 +105,7 @@ class AStarPlanner:
             return
 
         # --- Run A* on the grid ---
-        path_cells = a_star(self.grid, (sx, sy), (gx, gy))
+        path_cells = astar(self.grid, (sx, sy), (gx, gy))
         if not path_cells:
             rospy.logwarn("No path found by A*")
             return

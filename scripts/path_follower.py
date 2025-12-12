@@ -28,31 +28,66 @@ class PathFollower:
         )
 
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
-        self.path_sub = rospy.Subscriber("/dijkstra_path", Path,
-                                         self.path_callback,
-                                         queue_size=1)
 
-        self.waypoints = []        # list of (x, y)
+        # Create priority parameters
+        # Always follow A* path, if there isn't one, follow Dijkstra, if there isn't one, then follow greedy
+        self.astar_path = None
+        self.dij_path   = None
+        self.best_first_path = None
+        self.last_astar_time = 0.0
+
+        # Subscribe to all topics of path planning
+        rospy.Subscriber("/a_star_path",   Path, self.a_star_callback,   queue_size=1)
+        rospy.Subscriber("/dijkstra_path", Path, self.dijkstra_callback, queue_size=1)
+        rospy.Subscriber("/best_first_path",  Path, self.best_first_callback,  queue_size=1)
+
+        # Internal state
+        self.waypoints = []
         self.current_idx = 0
         self.active = False
+        self.current_priority = None
 
-        rospy.loginfo("PathFollower initialized with base_frame=%s fixed_frame=%s",
-                      self.base_frame, self.fixed_frame)
+        rospy.loginfo("PathFollower with priority: A* > Dijkstra > Greedy")
 
-    def path_callback(self, msg: Path):
+    # Fill in values for paths (check if there is a generated path from the topic node)
+    # PRIORITY: 1 = A*, 2 = Dijkstra, 3 = Best-first
+    def a_star_callback(self, msg):
         if not msg.poses:
-            rospy.logwarn("Received empty path, stopping follower")
-            self.stop()
             return
 
+        # Always override - highest priority
+        self.current_priority = 1
+        self.astar_path = msg
+        self._load_new_path(msg, "A*")
+
+    def dijkstra_callback(self, msg):
+        if not msg.poses:
+            return
+
+        # Only override if no A* path is active
+        if self.current_priority is None or self.current_priority > 1:
+            self.current_priority = 2
+            self.dij_path = msg
+            self._load_new_path(msg, "Dijkstra")
+
+    def best_first_callback(self, msg):
+        if not msg.poses:
+            return
+
+        # Only override if no A* or Dijkstra path is active
+        if self.current_priority is None or self.current_priority > 2:
+            self.current_priority = 3
+            self.best_first_path = msg
+            self._load_new_path(msg, "Best-First")
+
+    def _load_new_path(self, msg, name="Unknown"):
         self.waypoints = [
             (pose.pose.position.x, pose.pose.position.y)
             for pose in msg.poses
         ]
         self.current_idx = 0
         self.active = True
-
-        rospy.loginfo("Received new path with %d waypoints", len(self.waypoints))
+        rospy.loginfo("Using %s path with %d waypoints", name, len(self.waypoints))
 
     def stop(self):
         self.active = False
