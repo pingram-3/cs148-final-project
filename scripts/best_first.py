@@ -56,7 +56,7 @@ class Node:
             node = node.parent
         return path[::-1]  # reverse to get start→goal order
 
-# A* Search with Manhattan Distance Heuristic
+# Greedy Best-First Search with Manhattan Distance Heuristic
 def manhattanDistHeuristic(currPos, goalPos):
     return abs(currPos[0] - goalPos[0]) + abs(currPos[1] - goalPos[1])
 
