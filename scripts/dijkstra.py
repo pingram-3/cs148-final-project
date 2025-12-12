@@ -37,7 +37,12 @@ def dijkstra(grid, start, goal):
     dist[sy, sx] = 0.0
     heapq.heappush(pq, (0.0, sx, sy))
 
+    expanded = 0
+    maxQueue = -1
+
     while pq:
+        maxQueue = max(maxQueue, len(pq))
+
         curr_cost, x, y = heapq.heappop(pq)
 
         # Early exit if we've reached the goal
@@ -48,6 +53,8 @@ def dijkstra(grid, start, goal):
         if curr_cost > dist[y, x]:
             continue
 
+        expanded += 1
+
         # Relax neighbors
         for nx, ny in get_neighbors(x, y, grid):
             new_cost = curr_cost + 1.0
@@ -56,6 +63,10 @@ def dijkstra(grid, start, goal):
                 dist[ny, nx] = new_cost
                 parent[ny, nx] = [x, y]  # store parent as (x, y)
                 heapq.heappush(pq, (new_cost, nx, ny))
+
+    # For analysis
+    print(f"\nTo solve this problem the search algorithm expanded a total of {expanded} nodes")
+    print(f"The maximum number of nodes in the queue at any one time: {maxQueue}")
 
     # If goal still has infinite distance, no path
     if not np.isfinite(dist[gy, gx]):
